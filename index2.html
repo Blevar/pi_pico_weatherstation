@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stacja Meteo Blevar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .stats, .charts, .clock {
+            margin: 20px 0;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ccc;
+        }
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        canvas {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        .clock {
+            text-align: center;
+            font-size: 1.5em;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Stacja Meteo Blevar</h1>
+</header>
+
+<div class="container">
+    <div class="clock" id="clock">
+        <!-- Zegar z aktualną datą i godziną -->
+        <span id="time"></span>
+    </div>
+
+    <div class="stats">
+        <h2>Aktualne Dane</h2>
+        <div class="stat-item">
+            <span>Temperatura:</span>
+            <span>{{temperature}} °C</span>
+        </div>
+        <div class="stat-item">
+            <span>Wilgotność:</span>
+            <span>{{humidity}} %</span>
+        </div>
+        <div class="stat-item">
+            <span>Ciśnienie:</span>
+            <span>{{pressure}} hPa</span>
+        </div>
+        <div class="stat-item">
+            <span>Prędkość Wiatru:</span>
+            <span>{{wind_speed}} m/s</span>
+        </div>
+        <h2>Wartości Min/Max z ostatnich 24 godzin</h2>
+        <div class="stat-item">
+            <span>Min Temperatura:</span>
+            <span>{{min_temperature}} °C</span>
+        </div>
+        <div class="stat-item">
+            <span>Max Temperatura:</span>
+            <span>{{max_temperature}} °C</span>
+        </div>
+        <div class="stat-item">
+            <span>Min Wilgotność:</span>
+            <span>{{min_humidity}} %</span>
+        </div>
+        <div class="stat-item">
+            <span>Max Wilgotność:</span>
+            <span>{{max_humidity}} %</span>
+        </div>
+        <div class="stat-item">
+            <span>Min Ciśnienie:</span>
+            <span>{{min_pressure}} hPa</span>
+        </div>
+        <div class="stat-item">
+            <span>Max Ciśnienie:</span>
+            <span>{{max_pressure}} hPa</span>
+        </div>
+        <div class="stat-item">
+            <span>Min Prędkość Wiatru:</span>
+            <span>{{min_wind_speed}} m/s</span>
+        </div>
+        <div class="stat-item">
+            <span>Max Prędkość Wiatru:</span>
+            <span>{{max_wind_speed}} m/s</span>
+        </div>
+    </div>
+
+    <div class="charts">
+        <h2>Wykresy Zmian w Czasie</h2>
+
+        <h3>Ostatnie 24 godziny (co godzinę)</h3>
+        <canvas id="chart24h"></canvas>
+
+        <h3>Ostatni tydzień (co godzinę)</h3>
+        <canvas id="chart7d"></canvas>
+
+        <h3>Ostatni miesiąc (dziennie)</h3>
+        <canvas id="chart30d"></canvas>
+
+        <h3>Ostatnie 3 miesiące (dziennie)</h3>
+        <canvas id="chart90d"></canvas>
+    </div>
+</div>
+
+<script>
+    // Funkcja do aktualizacji zegara
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleString('pl-PL', { hour12: false });
+        document.getElementById('time').textContent = timeString;
+    }
+
+    // Aktualizuj zegar co sekundę
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Konfiguracja wykresu dla ostatnich 24 godzin
+    const ctx24h = document.getElementById('chart24h').getContext('2d');
+    const chart24h = new Chart(ctx24h, {
+        type: 'line',
+        data: {
+            labels: {{chart24h_labels}},
+            datasets: [
+                {
+                    label: 'Temperatura (°C)',
+                    data: {{chart24h_temperatures}},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Wilgotność (%)',
+                    data: {{chart24h_humidities}},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Ciśnienie (hPa)',
+                    data: {{chart24h_pressures}},
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    yAxisID: 'y2'
+                },
+                {
+                    label: 'Prędkość Wiatru (m/s)',
+                    data: {{chart24h_wind_speeds}},
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    yAxisID: 'y3'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: { type: 'linear', position: 'left', title: { display: true, text: 'Temperatura (°C)' } },
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'Wilgotność (%)' }, grid: { drawOnChartArea: false } },
+                y2: { type: 'linear', position: 'left', title: { display: true, text: 'Ciśnienie (hPa)' }, grid: { drawOnChartArea: false } },
+                y3: { type: 'linear', position: 'right', title: { display: true, text: 'Prędkość Wiatru (m/s)' }, grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    // Analogiczne konfiguracje dla chart7d, chart30d, chart90d
+    const ctx7d = document.getElementById('chart7d').getContext('2d');
+    const chart7d = new Chart(ctx7d, {
+        type: 'line',
+        data: {
+            labels: {{chart7d_labels}},
+            datasets: [
+                {
+                    label: 'Temperatura (°C)',
+                    data: {{chart7d_temperatures}},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Wilgotność (%)',
+                    data: {{chart7d_humidities}},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Ciśnienie (hPa)',
+                    data: {{chart7d_pressures}},
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    yAxisID: 'y2'
+                },
+                {
+                    label: 'Prędkość Wiatru (m/s)',
+                    data: {{chart7d_wind_speeds}},
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    yAxisID: 'y3'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: { type: 'linear', position: 'left', title: { display: true, text: 'Temperatura (°C)' } },
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'Wilgotność (%)' }, grid: { drawOnChartArea: false } },
+                y2: { type: 'linear', position: 'left', title: { display: true, text: 'Ciśnienie (hPa)' }, grid: { drawOnChartArea: false } },
+                y3: { type: 'linear', position: 'right', title: { display: true, text: 'Prędkość Wiatru (m/s)' }, grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    const ctx30d = document.getElementById('chart30d').getContext('2d');
+    const chart30d = new Chart(ctx30d, {
+        type: 'line',
+        data: {
+            labels: {{chart30d_labels}},
+            datasets: [
+                {
+                    label: 'Temperatura (°C)',
+                    data: {{chart30d_temperatures}},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Wilgotność (%)',
+                    data: {{chart30d_humidities}},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Ciśnienie (hPa)',
+                    data: {{chart30d_pressures}},
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    yAxisID: 'y2'
+                },
+                {
+                    label: 'Prędkość Wiatru (m/s)',
+                    data: {{chart30d_wind_speeds}},
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    yAxisID: 'y3'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: { type: 'linear', position: 'left', title: { display: true, text: 'Temperatura (°C)' } },
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'Wilgotność (%)' }, grid: { drawOnChartArea: false } },
+                y2: { type: 'linear', position: 'left', title: { display: true, text: 'Ciśnienie (hPa)' }, grid: { drawOnChartArea: false } },
+                y3: { type: 'linear', position: 'right', title: { display: true, text: 'Prędkość Wiatru (m/s)' }, grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+
+    const ctx90d = document.getElementById('chart90d').getContext('2d');
+    const chart90d = new Chart(ctx90d, {
+        type: 'line',
+        data: {
+            labels: {{chart90d_labels}},
+            datasets: [
+                {
+                    label: 'Temperatura (°C)',
+                    data: {{chart90d_temperatures}},
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Wilgotność (%)',
+                    data: {{chart90d_humidities}},
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Ciśnienie (hPa)',
+                    data: {{chart90d_pressures}},
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    yAxisID: 'y2'
+                },
+                {
+                    label: 'Prędkość Wiatru (m/s)',
+                    data: {{chart90d_wind_speeds}},
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    yAxisID: 'y3'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: { type: 'linear', position: 'left', title: { display: true, text: 'Temperatura (°C)' } },
+                y1: { type: 'linear', position: 'right', title: { display: true, text: 'Wilgotność (%)' }, grid: { drawOnChartArea: false } },
+                y2: { type: 'linear', position: 'left', title: { display: true, text: 'Ciśnienie (hPa)' }, grid: { drawOnChartArea: false } },
+                y3: { type: 'linear', position: 'right', title: { display: true, text: 'Prędkość Wiatru (m/s)' }, grid: { drawOnChartArea: false } }
+            }
+        }
+    });
+</script>
+</body>
+</html>
